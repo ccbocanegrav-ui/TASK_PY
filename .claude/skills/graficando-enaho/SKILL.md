@@ -8,7 +8,7 @@ argument-hint: [area|sexo|edad|departamento] [pobreza|extrema] [año]
 1. Si no existen `salidas/personas_<año>.parquet` y `salidas/hogares_<año>.parquet` (2024 si no piden otro),
    usa primero la skill `limpiando-enaho`.
 2. Traduce el pedido a un corte: urbano/rural → `area`; hombres/mujeres → `sexo`; niños, jóvenes, adultos
-   mayores → `edad`; regiones → `departamento`. Si piden pobreza extrema, `--medida extrema`.
+   mayores → `edad`; regiones → `departamento`. `--medida` es `pobreza` (por defecto) o `extrema`.
 3. Corre: `uv run ${CLAUDE_SKILL_DIR}/scripts/graficar.py --por <corte> --medida <medida> --anio <año>`.
    Un corte por gráfico; si piden varios, una corrida por corte.
 4. Mira el PNG antes de entregarlo y responde con las cifras que imprime el script y la ruta del archivo.

@@ -7,7 +7,7 @@ argument-hint: [pobreza|extrema] [año]
 
 1. Si no existe `salidas/hogares_<año>.parquet` (2024 si no piden otro), usa primero la skill `limpiando-enaho`.
    Si falta `datos/peru_departamental_simple.geojson`, pide al usuario bajarlo (enlace en el README).
-2. Corre: `uv run ${CLAUDE_SKILL_DIR}/scripts/mapear.py --medida <medida> --anio <año>`.
+2. Corre: `uv run ${CLAUDE_SKILL_DIR}/scripts/mapear.py --medida <pobreza|extrema> --anio <año>`.
 3. Si el script se detiene porque la unión falló o no replica la referencia 2024, no lo «arregles» uniendo por
    nombre: revisa que los códigos sean texto de dos dígitos y que la base esté validada.
 4. Mira el PNG antes de entregarlo. Responde con la ruta, el departamento con mayor y menor pobreza y sus cifras

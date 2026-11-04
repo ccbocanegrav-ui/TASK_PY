@@ -7,7 +7,7 @@ argument-hint: [año]
 
 1. Si faltan los zip en `datos/` (`966-Modulo34.zip`, `966-Modulo02.zip` para 2024), pide al usuario bajarlos del
    portal del INEI (enlaces en el README). No intentes otras URL.
-2. Corre exactamente: `uv run ${CLAUDE_SKILL_DIR}/scripts/limpiar.py --anio $0` (2024 si no hay año).
+2. Corre exactamente: `uv run ${CLAUDE_SKILL_DIR}/scripts/limpiar.py --anio <año>` (2024 si no piden otro).
    No reescribas el pipeline ni lo cambies para que pase la validación.
 3. Lee `salidas/validacion.txt`. Si dice `NO VALIDADA` o la pobreza difiere del INEI en más de 0.1 puntos,
    detente y muestra qué chequeo falló.

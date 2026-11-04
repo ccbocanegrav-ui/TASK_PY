@@ -1,25 +1,31 @@
 ---
 name: limpiando-enaho
-description: Limpia y une los módulos 34 (sumaria) y 02 (miembros) de la ENAHO del INEI para crear una base de personas con pobreza y factor de expansión. Úsala cuando pidan limpiar, unir o analizar la ENAHO, consultar pobreza o preparar datos para un gráfico o mapa.
+description: Limpia los módulos 34 (sumaria) y 02 (miembros) de la ENAHO del INEI, valida contra la pobreza oficial y deja bases de personas y hogares con pobreza y factores de expansión. Úsala siempre que pregunten una cifra de pobreza del Perú (por ejemplo la pobreza en Cusco, Puno o Lima en 2024), o pidan limpiar, unir o analizar la ENAHO, aunque ya exista una tabla en mapas/ o figuras/.
 argument-hint: [año]
 ---
-
 # Limpiar la ENAHO
 
-1. El proyecto solo incluye el código 966 de la ENAHO 2024. Si faltan
-   `datos/966-Modulo34.zip` o `datos/966-Modulo02.zip`, pide al usuario que los
-   descargue del INEI. No simules resultados con datos inventados.
-2. Ejecuta desde la raíz del proyecto. Si recibes un año, pásalo con
-   `--anio $0`; si no, omite esa opción (el script usa 2024 por defecto):
+1. Si faltan los zip en `datos/` (`966-Modulo34.zip`, `966-Modulo02.zip` para 2024), pide al usuario bajarlos del
+   portal del INEI (enlaces en el README). No intentes otras URL.
+2. Corre exactamente: `uv run ${CLAUDE_SKILL_DIR}/scripts/limpiar.py --anio $0` (2024 si no hay año).
+   No reescribas el pipeline ni lo cambies para que pase la validación.
+3. Lee `salidas/validacion.txt`. Si dice `NO VALIDADA` o la pobreza difiere del INEI en más de 0.1 puntos,
+   detente y muestra qué chequeo falló.
+4. Bases que deja:
+   - `salidas/personas_<año>.parquet`: un residente habitual por fila; pondera con `facpob07` (sexo, edad).
+   - `salidas/hogares_<año>.parquet`: un hogar por fila; pondera con `peso` = `factor07 × mieperho`
+     (pobreza nacional, por área y por departamento).
+5. Toda cifra va ponderada. Pobre es `pobreza <= 2`; nunca promedies el código `pobreza`.
+6. Departamentos por código de dos dígitos (`ubigeo[:2]`), nunca por nombre.
+7. Antes de usar una variable que no está en la base, lee [reference.md](reference.md).
 
-   ```bash
-   uv run ${CLAUDE_SKILL_DIR}/scripts/limpiar.py --anio $0
-   ```
+## Para responder una cifra
 
-3. Lee `salidas/validacion.txt`. Si algún control falla, explica el error y no
-   uses la base como si fuera válida. La tasa debe estar a no más de 0.1 puntos
-   porcentuales de 27.6 % y deben quedar 108,664 residentes habituales.
-4. Responde usando `salidas/personas_2024.parquet`. Toda cifra de personas se
-   pondera con `facpob07`.
-5. Antes de usar una variable no descrita en la base, consulta
-   [reference.md](reference.md).
+Calcúlala desde las bases validadas, no desde CSV o figuras previas, que pueden ser de otra corrida:
+
+```python
+import pandas as pd
+h = pd.read_parquet("salidas/hogares_2024.parquet")
+c = h[h.departamento == "08"]
+print(round((c.pobre * c.peso).sum() / c.peso.sum() * 100, 1))  # Cusco: 18.5
+```

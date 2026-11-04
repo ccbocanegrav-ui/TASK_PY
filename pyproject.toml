@@ -1,13 +1,7 @@
 [project]
 name = "enaho-skills"
 version = "0.1.0"
-description = "Skills reproducibles para limpiar, graficar y mapear la ENAHO 2024"
+description = "Skills de Claude Code para limpiar, graficar y mapear la pobreza de la ENAHO 2024"
 readme = "README.md"
-requires-python = ">=3.10"
-dependencies = [
-    "geopandas",
-    "matplotlib",
-    "pandas",
-    "pyarrow",
-]
-
+requires-python = ">=3.11"
+dependencies = ["pandas", "pyarrow", "geopandas", "matplotlib"]

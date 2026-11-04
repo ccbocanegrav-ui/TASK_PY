@@ -1,66 +1,76 @@
-# Skills para trabajar con la ENAHO 2024
+# enaho-skills
 
-Este proyecto reúne tres skills de Claude Code para limpiar los módulos 34 y 02
-del INEI, graficar indicadores ponderados y mapear la pobreza por departamento.
-Los archivos de microdatos se mantienen localmente en `datos/` y no se suben a
-git.
+Tres skills de Claude Code para trabajar la ENAHO 2024 del INEI siempre de la misma forma: limpiarla y validarla
+contra la pobreza oficial (27.6 %), graficarla y mapearla por departamento.
 
-## Requisitos
+| Skill | Entra | Sale |
+|---|---|---|
+| [`limpiando-enaho`](.claude/skills/limpiando-enaho/SKILL.md) | Zip de los módulos 34 y 02 | `salidas/personas_2024.parquet`, `salidas/hogares_2024.parquet`, [`salidas/validacion.txt`](salidas/validacion.txt) |
+| [`graficando-enaho`](.claude/skills/graficando-enaho/SKILL.md) | La base limpia y un corte: área, sexo, edad o departamento | `figuras/*.png` |
+| [`mapeando-enaho`](.claude/skills/mapeando-enaho/SKILL.md) | La base limpia y el GeoJSON | `mapas/pobreza_departamento.png` y `.csv` |
 
-- Git, Python 3.10 o posterior y [uv](https://docs.astral.sh/uv/).
-- Claude Code para activar las skills.
-- Los dos ZIP de microdatos y el GeoJSON indicados abajo.
+Se encadenan: si falta la base limpia, graficar y mapear llaman primero a `limpiando-enaho`, así que un solo pedido
+(«haz un mapa de la pobreza por departamento») activa dos skills seguidas.
 
-## Datos de entrada
+## Instalar
 
-Descarga y guarda en `datos/`:
+Requiere [uv](https://docs.astral.sh/uv/) y Claude Code.
 
-1. [Módulo 34, sumaria (código 966)](https://proyectos.inei.gob.pe/iinei/srienaho/descarga/STATA/966-Modulo34.zip)
-   como `966-Modulo34.zip`.
-2. [Módulo 02, miembros (código 966)](https://proyectos.inei.gob.pe/iinei/srienaho/descarga/STATA/966-Modulo02.zip)
-   como `966-Modulo02.zip`.
-3. [Límites departamentales de Perú](https://raw.githubusercontent.com/d2cml-ai/Data-Science-Python/main/sessions/06-geoespacial/lab/Data/peru_departamental_simple.geojson)
-   como `peru_departamental_simple.geojson`.
-
-El código 966 corresponde a la ENAHO 2024. `datos/` está excluida de git. Los
-scripts leen un `.dta` suelto, un directorio con `.dta` o un ZIP que contenga un
-único archivo `.dta`; no es necesario extraer los ZIP.
-
-## Instalación y ejecución
-
-Desde PowerShell, en la raíz del proyecto:
-
-```powershell
+```bash
+git clone <este repositorio> && cd enaho-skills
 uv sync
-uv run python .claude/skills/limpiando-enaho/scripts/limpiar.py --anio 2024
-uv run python .claude/skills/graficando-enaho/scripts/graficar.py --por area --anio 2024
-uv run python .claude/skills/mapeando-enaho/scripts/mapear.py --anio 2024
 ```
 
-La limpieza produce `salidas/personas_2024.parquet` y
-`salidas/validacion.txt`. El gráfico produce un PNG en `figuras/`; el mapa,
-`mapas/pobreza_departamento.png`. Los scripts detienen la ejecución con un
-error explícito cuando faltan entradas, variables o validaciones.
+Las skills están en `.claude/skills/` y se cargan al abrir Claude Code en esta carpeta (compruébalo con `/skills`).
 
-Para escoger otro corte gráfico, usa `--por sexo` o `--por edad`. Todas las
-cifras se ponderan con `facpob07`. El corte por edad usa grupos 0–17, 18–29,
-30–44, 45–59 y 60 años o más.
+## Bajar los datos
 
-## Skills de Claude Code
+Desde el navegador, a una carpeta `datos/` (está en `.gitignore`: los microdatos no se suben):
 
-Las skills están en `.claude/skills/`. En Claude Code puedes invocarlas con:
+- [Módulo 34, sumaria](https://proyectos.inei.gob.pe/iinei/srienaho/descarga/STATA/966-Modulo34.zip) → `datos/966-Modulo34.zip`
+- [Módulo 02, miembros](https://proyectos.inei.gob.pe/iinei/srienaho/descarga/STATA/966-Modulo02.zip) → `datos/966-Modulo02.zip`
+- [Límites departamentales](https://raw.githubusercontent.com/d2cml-ai/Data-Science-Python/main/sessions/06-geoespacial/lab/Data/peru_departamental_simple.geojson) → `datos/peru_departamental_simple.geojson`
 
-- `/limpiando-enaho 2024`
-- `/graficando-enaho area`
-- `/mapeando-enaho 2024`
+`966` es el código de la ENAHO 2024 en el portal del INEI.
 
-También se activan automáticamente cuando la solicitud coincide con su
-descripción. Las skills de gráficos y mapas indican que primero se ejecute
-`limpiando-enaho` si falta la base parquet.
+## Correr todo
 
-## Evaluación manual
+```bash
+uv run .claude/skills/limpiando-enaho/scripts/limpiar.py --anio 2024
+uv run .claude/skills/graficando-enaho/scripts/graficar.py --por area
+uv run .claude/skills/graficando-enaho/scripts/graficar.py --por sexo
+uv run .claude/skills/graficando-enaho/scripts/graficar.py --por edad
+uv run .claude/skills/mapeando-enaho/scripts/mapear.py
+```
 
-Abre [evaluacion.md](./evaluacion.md) y registra los resultados después de
-ejecutar las solicitudes con Claude Code. La tabla es una plantilla; no se
-marcan skills ni cifras como verificadas hasta ejecutarlas con los datos
-locales.
+O en Claude Code, en lenguaje natural:
+
+```text
+¿Cuál fue la pobreza en Cusco en 2024?
+Grafica la pobreza urbana y rural
+Haz un mapa de la pobreza por departamento con la ENAHO 2024
+```
+
+## Validación
+
+`limpiar.py` termina con `RESULTADO: VALIDADA` solo si la base replica las cifras oficiales: 27.6 % de pobreza,
+5.5 % de pobreza extrema, 33,691 hogares y 108,664 residentes habituales. `mapear.py` compara los 25
+departamentos con [`referencias/pobreza_departamento_2024.csv`](referencias/pobreza_departamento_2024.csv).
+Resultado de mi corrida: [`salidas/validacion.txt`](salidas/validacion.txt).
+
+## Evaluación
+
+Tres pedidos con y sin skills: [evaluacion.md](evaluacion.md).
+
+## Estructura
+
+```text
+.claude/skills/
+  limpiando-enaho/   SKILL.md, reference.md, scripts/limpiar.py
+  graficando-enaho/  SKILL.md, scripts/graficar.py
+  mapeando-enaho/    SKILL.md, scripts/mapear.py
+referencias/  salidas/validacion.txt  figuras/  mapas/
+evaluacion.md  README.md  pyproject.toml
+```
+
+Autora: <Carla Bocanegra>. Basado en la sesión 16 del curso Data Science con Python (d2cml-ai).
